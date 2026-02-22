@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Decentralized Voting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --secondary: #007bff;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --dark: #343a40;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        }
+        
+        .card.animate-in {
+            animation: cardEntrance 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+        
+        @keyframes cardEntrance {
+            0% {
+                transform: translateY(50px) scale(0.95);
+                opacity: 0;
+            }
+            70% {
+                transform: translateY(-10px) scale(1.02);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .admin-header {
+            background: linear-gradient(45deg, var(--primary), #2c3e50);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .admin-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
+            animation: gradientShift 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes gradientShift {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+        
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+        
+        .stat-card:hover::after {
+            width: 100%;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover .stat-number {
+            transform: scale(1.1);
+            color: var(--secondary);
+        }
+        
+        .progress-bar {
+            transition: width 1.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progressShine 2s infinite;
+        }
+        
+        @keyframes progressShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .navbar:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(111, 66, 193, 0.5);
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .recent-votes-table tr {
+            transition: all 0.2s ease;
+        }
+        
+        .recent-votes-table tr:hover {
+            background-color: rgba(111, 66, 193, 0.05);
+            transform: translateX(5px);
+        }
+        
+        .admin-controls {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .admin-badge {
+            background: linear-gradient(45deg, var(--warning), #f39c12);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .floating-element {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Background Elements -->
+    <div class="floating-elements">
+        <div class="floating-element" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="floating-element" style="left: 20%; animation-delay: 2s;"></div>
+        <div class="floating-element" style="left: 30%; animation-delay: 4s;"></div>
+        <div class="floating-element" style="left: 40%; animation-delay: 6s;"></div>
+        <div class="floating-element" style="left: 50%; animation-delay: 8s;"></div>
+        <div class="floating-element" style="left: 60%; animation-delay: 10s;"></div>
+        <div class="floating-element" style="left: 70%; animation-delay: 12s;"></div>
+        <div class="floating-element" style="left: 80%; animation-delay: 14s;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/admin">
+                <i class="fas fa-shield-alt me-2"></i>Admin Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
+                <a class="nav-link" href="/admin/blockchain"><i class="fas fa-link me-1"></i> Full Blockchain</a>
+                <a class="nav-link" href="/candidates"><i class="fas fa-users me-1"></i> Manage Candidates</a>
+                <a class="nav-link" href="/user"><i class="fas fa-user me-1"></i> User View</a>
+                <a class="nav-link text-danger" href="/logout"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <!-- Header Stats -->
+        <div class="row mb-5">
+            <div class="col-md-12">
+                <div class="card admin-header animate-in">
+                    <div class="card-body text-center">
+                        <h1 class="display-4 fw-bold mb-3">
+                            <i class="fas fa-shield-alt pulse"></i> Administrator Dashboard
+                        </h1>
+                        <p class="lead">Full control and oversight of the voting system</p>
+                        <div class="admin-badge d-inline-block mt-2">
+                            <i class="fas fa-user-shield me-1"></i>ADMIN MODE
+                        </div>
+                        <div class="d-flex justify-content-center gap-4 mt-4">
+                            <div class="stat-card animate-in" style="animation-delay: 0.1s;">
+                                <div class="stat-number">{{ total_votes }}</div>
+                                <div>Total Votes</div>
+                            </div>
+                            <div class="stat-card animate-in" style="animation-delay: 0.2s;">
+                                <div class="stat-number">{{ blockchain_info.total_blocks - 1 }}</div>
+                                <div>Transaction Records</div>
+                            </div>
+                            <div class="stat-card animate-in" style="animation-delay: 0.3s;">
+                                <div class="stat-number">
+                                    <i class="fas fa-shield-check {% if blockchain_info.is_valid %}text-success{% else %}text-danger{% endif %}"></i>
+                                </div>
+                                <div>
+                                    {% if blockchain_info.is_valid %}Chain Valid{% else %}Chain Invalid{% endif %}
+                                </div>
+                            </div>
+                            <div class="stat-card animate-in" style="animation-delay: 0.4s;">
+                                <div class="stat-number">{{ candidates|length }}</div>
+                                <div>Candidates</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="row">
+            <!-- Vote Results -->
+            <div class="col-md-8">
+                <div class="card mb-4 animate-in" style="animation-delay: 0.5s;">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Detailed Vote Results</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if candidates %}
+                            {% for candidate in candidates %}
+                            <div class="border-bottom pb-3 mb-3 animate-in" style="animation-delay: {{ loop.index * 0.1 + 0.6 }}s;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="h5 mb-1">{{ candidate.name }}</div>
+                                        <div class="text-muted small">ID: {{ candidate.id }}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h4 mb-0 text-primary">{{ candidate.votes }} <small class="text-muted">votes</small></div>
+                                        <div class="text-muted">{{ candidate.percentage }}%</div>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 12px;">
+                                    <div class="progress-bar bg-primary" 
+                                         role="progressbar" 
+                                         style="width: {{ candidate.percentage }}%"
+                                         aria-valuenow="{{ candidate.percentage }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        <span class="visually-hidden">{{ candidate.percentage }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5 animate-in" style="animation-delay: 0.7s;">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No votes have been cast yet</p>
+                                <a href="/vote" class="btn btn-primary">Cast First Vote</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Votes -->
+                <div class="card animate-in" style="animation-delay: 0.8s;">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0"><i class="fas fa-history me-2"></i>Recent Transaction Activity</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if all_blocks %}
+                            <div class="table-responsive">
+                                <table class="table table-hover recent-votes-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Block #</th>
+                                            <th>Candidate</th>
+                                            <th>Voter Hash</th>
+                                            <th>Timestamp</th>
+                                            <th>Block Hash</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for block in all_blocks[:10] %}  <!-- Show last 10 votes -->
+                                        <tr class="animate-in" style="animation-delay: {{ loop.index * 0.05 + 0.9 }}s;">
+                                            <td><strong>#{{ block.block_number }}</strong></td>
+                                            <td>{{ block.candidate_name }}</td>
+                                            <td class="text-muted" title="{{ block.voter_id_hash }}"><small>{{ block.voter_id_hash[:16] }}...</small></td>
+                                            <td><small>{{ block.timestamp.split('.')[0] }}</small></td>
+                                            <td class="text-muted" title="{{ block.block_hash }}"><small>{{ block.block_hash[:12] }}...</small></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-3 animate-in" style="animation-delay: 1.0s;">
+                                <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0">No transaction activity yet</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Controls -->
+            <div class="col-md-4">
+                <!-- Blockchain Info -->
+                <div class="card mb-4 animate-in" style="animation-delay: 0.6s;">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0"><i class="fas fa-link me-2"></i>Blockchain Status</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Total Blocks:</span>
+                                <strong>{{ blockchain_info.total_blocks }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Vote Transactions:</span>
+                                <strong>{{ blockchain_info.total_votes }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Chain Status:</span>
+                                <strong class="{% if blockchain_info.is_valid %}text-success{% else %}text-danger{% endif %}">
+                                    {% if blockchain_info.is_valid %}<i class="fas fa-check-circle me-1"></i>Valid{% else %}<i class="fas fa-times-circle me-1"></i>Invalid{% endif %}
+                                </strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Genesis Time:</span>
+                                <small class="text-muted">{{ blockchain.chain[0].timestamp.split('.')[0] }}</small>
+                            </li>
+                        </ul>
+                        <div class="mt-3">
+                            <button class="btn btn-warning w-100 mb-2" onclick="verifyIntegrity()">
+                                <i class="fas fa-shield-alt me-2"></i>Verify Integrity
+                            </button>
+                            <a href="/admin/blockchain" class="btn btn-outline-info w-100">
+                                <i class="fas fa-list me-2"></i>View All Blocks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4 animate-in" style="animation-delay: 0.7s;">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="fas fa-bolt me-2"></i>Admin Actions</h4>
+                    </div>
+                    <div class="card-body admin-controls">
+                        <div class="d-grid gap-2">
+                            <a href="/vote" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create Test Vote
+                            </a>
+                            <a href="/candidates" class="btn btn-warning">
+                                <i class="fas fa-user-plus me-2"></i>Manage Candidates
+                            </a>
+                            <a href="/admin/blockchain" class="btn btn-info">
+                                <i class="fas fa-search me-2"></i>Full Blockchain View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Info -->
+                <div class="card animate-in" style="animation-delay: 0.8s;">
+                    <div class="card-header bg-secondary text-white">
+                        <h4 class="mb-0"><i class="fas fa-server me-2"></i>System Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-lock fa-3x text-success mb-2"></i>
+                            <p class="mb-1">Secure Admin Mode</p>
+                            <small class="text-muted">Full system access granted</small>
+                        </div>
+                        <div class="text-center">
+                            <a href="/logout" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add staggered animations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animate-in');
+                }, index * 100);
+            });
+        });
+
+        function verifyIntegrity() {
+            fetch('/api/integrity_check')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        alert('✓ Blockchain integrity verified successfully!\nAll blocks are valid and untampered.');
+                    } else {
+                        alert('✗ Blockchain integrity check failed!\nSome blocks may have been tampered with.');
+                    }
+                })
+                .catch(error => {
+                    alert('Error verifying blockchain integrity');
+                });
+        }
+    </script>
+</body>
+</html>
