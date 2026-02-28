@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Explorer - Decentralized Voting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --secondary: #007bff;
+            --success: #28a745;
+            --dark: #343a40;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .block-card {
+            border-left: 5px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .hash-display {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 5px;
+            word-break: break-all;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 60px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 22px;
+            top: 15px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px var(--primary);
+        }
+        
+        .block-number {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            position: absolute;
+            left: 0;
+            top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/user">
+                <i class="fas fa-vote-yea me-2"></i>Public Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/user"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
+                <a class="nav-link" href="/vote"><i class="fas fa-plus-circle me-1"></i> Cast Vote</a>
+                <a class="nav-link active" href="/blockchain"><i class="fas fa-link me-1"></i> Blockchain</a>
+                <a class="nav-link" href="/login"><i class="fas fa-lock me-1"></i> Admin Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h1 class="display-5 fw-bold mb-3">
+                            <i class="fas fa-link me-3"></i>Blockchain Explorer
+                        </h1>
+                        <p class="lead mb-0">Public view of all vote transactions on the blockchain</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <h3 class="text-primary fw-bold">{{ blockchain|length }}</h3>
+                                <p class="text-muted mb-0">Transaction Blocks</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h3 class="text-success fw-bold">
+                                    <i class="fas fa-shield-check"></i>
+                                </h3>
+                                <p class="text-muted mb-0">Verified Chain</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h3 class="text-info fw-bold">
+                                    <i class="fas fa-lock"></i>
+                                </h3>
+                                <p class="text-muted mb-0">Immutable Records</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blockchain Timeline -->
+        <div class="timeline" id="blockchainTimeline">
+            {% if blockchain %}
+                {% for block in blockchain %}
+                <div class="timeline-item">
+                    <div class="block-number">{{ block.block_number }}</div>
+                    <div class="card block-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h5 class="card-title text-primary">
+                                        <i class="fas fa-vote-yea me-2"></i>{{ block.candidate_name }}
+                                    </h5>
+                                    <p class="text-muted mb-0">Transaction #{{ block.block_number }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong><i class="fas fa-calendar me-2"></i>Timestamp:</strong></p>
+                                    <p class="text-muted small">{{ block.timestamp }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong><i class="fas fa-fingerprint me-2"></i>Block Hash:</strong></p>
+                                    <div class="hash-display">{{ block.block_hash }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-link fa-4x text-muted mb-4"></i>
+                    <h3 class="text-muted">No blockchain data available</h3>
+                    <p class="text-muted">Cast some votes to see the blockchain in action!</p>
+                    <a href="/vote" class="btn btn-primary">Cast First Vote</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
