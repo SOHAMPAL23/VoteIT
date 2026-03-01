@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Candidates - Decentralized Voting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --secondary: #007bff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --dark: #343a40;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+        
+        .candidate-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .candidate-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, var(--danger), #c82333);
+            border: none;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-vote-yea me-2"></i>Decentralized Voting
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="fas fa-chart-bar me-1"></i> Dashboard</a>
+                <a class="nav-link" href="/vote"><i class="fas fa-plus-circle me-1"></i> Cast Vote</a>
+                <a class="nav-link" href="/blockchain"><i class="fas fa-link me-1"></i> Blockchain</a>
+                <a class="nav-link active" href="/candidates"><i class="fas fa-users me-1"></i> Candidates</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h1 class="display-5 fw-bold mb-3">
+                            <i class="fas fa-users me-3"></i>Candidate Management
+                        </h1>
+                        <p class="lead mb-0">Add or remove candidates from the voting system</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="stats-card">
+                                    <div class="stats-number">{{ candidates|length }}</div>
+                                    <div>Total Candidates</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stats-card">
+                                    <div class="stats-number" id="totalVotes">0</div>
+                                    <div>Total Votes Cast</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stats-card">
+                                    <div class="stats-number">
+                                        <i class="fas fa-plus-circle text-success"></i>
+                                    </div>
+                                    <div>Add New Candidates</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Candidate Form -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Add New Candidate</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="addCandidateForm">
+                            <div class="row">
+                                <div class="col-md-5 mb-3">
+                                    <label for="candidate_id" class="form-label fw-bold">Candidate ID</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="candidate_id" 
+                                           name="candidate_id" 
+                                           placeholder="e.g., CAND004"
+                                           required>
+                                    <div class="form-text">Unique identifier for the candidate</div>
+                                </div>
+                                <div class="col-md-5 mb-3">
+                                    <label for="candidate_name" class="form-label fw-bold">Candidate Name</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="candidate_name" 
+                                           name="candidate_name" 
+                                           placeholder="Full Name"
+                                           required>
+                                </div>
+                                <div class="col-md-2 mb-3 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-plus me-1"></i>Add
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Existing Candidates -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="fas fa-users me-2"></i>Current Candidates</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if candidates %}
+                            <div class="row" id="candidatesContainer">
+                                {% for candidate_id, candidate_name in candidates.items() %}
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="card candidate-card h-100">
+                                        <div class="card-body">
+                                            <div class="text-center mb-3">
+                                                <i class="fas fa-user-circle fa-3x text-primary mb-3"></i>
+                                                <h5 class="card-title">{{ candidate_name }}</h5>
+                                                <p class="text-muted">
+                                                    <i class="fas fa-id-badge me-1"></i>{{ candidate_id }}
+                                                </p>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button class="btn btn-outline-danger" 
+                                                        onclick="removeCandidate('{{ candidate_id }}')">
+                                                    <i class="fas fa-trash me-1"></i>Remove Candidate
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                                <h3 class="text-muted">No candidates available</h3>
+                                <p class="text-muted">Add your first candidate using the form above</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Success</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p id="successMessage" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Error</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <p id="errorMessage" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load vote counts
+        fetch('/api/vote_counts')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalVotes').textContent = data.total_votes;
+            })
+            .catch(error => console.log('Could not load vote counts'));
+
+        // Add candidate form submission
+        document.getElementById('addCandidateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const candidateId = document.getElementById('candidate_id').value;
+            const candidateName = document.getElementById('candidate_name').value;
+            
+            if (!candidateId || !candidateName) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            // Submit via AJAX
+            const formData = new FormData();
+            formData.append('action', 'add');
+            formData.append('candidate_id', candidateId);
+            formData.append('candidate_name', candidateName);
+            
+            fetch('/candidates', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(data.message);
+                    // Reset form
+                    document.getElementById('addCandidateForm').reset();
+                    // Reload page to show new candidate
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                showError('Network error. Please try again.');
+            });
+        });
+
+        // Remove candidate function
+        function removeCandidate(candidateId) {
+            if (!confirm('Are you sure you want to remove this candidate? This cannot be undone.')) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('action', 'remove');
+            formData.append('candidate_id', candidateId);
+            
+            fetch('/candidates', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(data.message);
+                    // Reload page to remove candidate
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                showError('Network error. Please try again.');
+            });
+        }
+
+        function showSuccess(message) {
+            document.getElementById('successMessage').textContent = message;
+            new bootstrap.Modal(document.getElementById('successModal')).show();
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            new bootstrap.Modal(document.getElementById('errorModal')).show();
+        }
+    </script>
+</body>
+</html>
