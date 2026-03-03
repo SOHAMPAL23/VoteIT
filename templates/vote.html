@@ -1,0 +1,294 @@
+\<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Vote - Decentralized Voting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --secondary: #007bff;
+            --success: #28a745;
+            --dark: #343a40;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .candidate-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .candidate-card:hover {
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+        
+        .candidate-card.selected {
+            border-color: var(--primary);
+            background: rgba(111, 66, 193, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(111, 66, 193, 0.4);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .success-animation {
+            animation: bounce 0.5s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-vote-yea me-2"></i>Decentralized Voting
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/vote"><i class="fas fa-plus-circle me-1"></i> Cast Vote</a>
+                <a class="nav-link" href="/"><i class="fas fa-chart-bar me-1"></i> Dashboard</a>
+                <a class="nav-link" href="/blockchain"><i class="fas fa-link me-1"></i> Blockchain</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white text-center py-4">
+                        <h2 class="mb-0"><i class="fas fa-vote-yea me-2"></i>Cast Your Vote</h2>
+                        <p class="mb-0 mt-2">Your vote is secured on the blockchain</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="voteForm">
+                            <!-- Voter ID Section -->
+                            <div class="mb-4">
+                                <label for="voter_id" class="form-label fw-bold">
+                                    <i class="fas fa-user me-2"></i>Your Voter ID
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="voter_id" 
+                                       name="voter_id" 
+                                       placeholder="Enter any unique identifier"
+                                       required>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    This will be hashed for your privacy. You can use any unique identifier.
+                                </div>
+                            </div>
+
+                            <!-- Candidate Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-users me-2"></i>Select Your Candidate
+                                </label>
+                                <div class="row" id="candidatesContainer">
+                                    {% for candidate_id, candidate_name in candidates.items() %}
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="card candidate-card h-100" 
+                                             data-candidate-id="{{ candidate_id }}"
+                                             onclick="selectCandidate('{{ candidate_id }}')">
+                                            <div class="card-body text-center">
+                                                <div class="mb-3">
+                                                    <i class="fas fa-user-circle fa-3x text-primary"></i>
+                                                </div>
+                                                <h5 class="card-title">{{ candidate_name }}</h5>
+                                                <p class="card-text text-muted small">
+                                                    <i class="fas fa-id-badge me-1"></i>{{ candidate_id }}
+                                                </p>
+                                                <div class="selected-badge d-none">
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>Selected
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <input type="hidden" id="candidate_id" name="candidate_id" required>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-paper-plane me-2"></i>Cast Vote
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Success Message -->
+                        <div id="successMessage" class="alert alert-success d-none mt-4 text-center">
+                            <i class="fas fa-check-circle fa-2x mb-3"></i>
+                            <h4 class="mb-2">Vote Recorded Successfully!</h4>
+                            <p class="mb-0">Your vote has been securely added to the blockchain.</p>
+                            <div class="mt-3">
+                                <a href="/" class="btn btn-success">View Results</a>
+                                <button class="btn btn-outline-success" onclick="resetForm()">Cast Another Vote</button>
+                            </div>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div id="errorMessage" class="alert alert-danger d-none mt-4 text-center">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                            <h4 class="mb-2">Vote Not Recorded</h4>
+                            <p id="errorText" class="mb-0"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedCandidate = null;
+
+        function selectCandidate(candidateId) {
+            // Remove selection from all cards
+            document.querySelectorAll('.candidate-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.selected-badge').classList.add('d-none');
+            });
+            
+            // Add selection to clicked card
+            const selectedCard = document.querySelector(`[data-candidate-id="${candidateId}"]`);
+            selectedCard.classList.add('selected');
+            selectedCard.querySelector('.selected-badge').classList.remove('d-none');
+            
+            // Set hidden input
+            document.getElementById('candidate_id').value = candidateId;
+            selectedCandidate = candidateId;
+        }
+
+        document.getElementById('voteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const voterId = document.getElementById('voter_id').value;
+            const candidateId = document.getElementById('candidate_id').value;
+            
+            if (!voterId || !candidateId) {
+                showError('Please fill in all fields and select a candidate');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Recording Vote...';
+            submitBtn.disabled = true;
+            
+            // Submit vote
+            fetch('/vote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `voter_id=${encodeURIComponent(voterId)}&candidate_id=${encodeURIComponent(candidateId)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess();
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                showError('Network error. Please try again.');
+            })
+            .finally(() => {
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+
+        function showSuccess() {
+            document.getElementById('voteForm').classList.add('d-none');
+            document.getElementById('successMessage').classList.remove('d-none');
+            document.getElementById('successMessage').classList.add('success-animation');
+        }
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').classList.remove('d-none');
+            
+            // Auto-hide error after 5 seconds
+            setTimeout(() => {
+                document.getElementById('errorMessage').classList.add('d-none');
+            }, 5000);
+        }
+
+        function resetForm() {
+            document.getElementById('voteForm').classList.remove('d-none');
+            document.getElementById('successMessage').classList.add('d-none');
+            document.getElementById('voteForm').reset();
+            
+            // Reset candidate selection
+            document.querySelectorAll('.candidate-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.selected-badge').classList.add('d-none');
+            });
+            
+            selectedCandidate = null;
+            document.getElementById('candidate_id').value = '';
+        }
+    </script>
+</body>
+</html>
