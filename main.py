@@ -137,6 +137,8 @@ class Blockchain:
             previous_hash="0"  # Genesis block has no previous hash
         )
         self.chain.append(genesis_block)
+        # Store state in genesis block timestamp field temporarily if needed, but better to keep in memory for demo
+        self.is_voting_active = False
         self._save_blockchain()
         print("✓ Genesis block created successfully")
     
@@ -146,6 +148,7 @@ class Blockchain:
             with open(self.blockchain_file, 'r') as f:
                 data = json.load(f)
                 self.chain = [Block.from_dict(block_data) for block_data in data]
+            self.is_voting_active = False # Default off on restart
             print(f"✓ Loaded blockchain with {len(self.chain)} blocks")
         except Exception as e:
             print(f"Error loading blockchain: {e}")
@@ -181,6 +184,10 @@ class Blockchain:
         Returns:
             bool: True if vote was added successfully, False otherwise
         """
+        if not hasattr(self, 'is_voting_active') or not self.is_voting_active:
+            print(f"✗ Voting is currently closed.")
+            return False
+
         # Validate inputs
         if not self.is_valid_candidate(candidate_id):
             print(f"✗ Invalid candidate ID: {candidate_id}")
@@ -253,7 +260,8 @@ class Blockchain:
             'total_blocks': len(self.chain),
             'total_votes': len(self.chain) - 1,  # Exclude genesis block
             'candidates': self.candidates,
-            'is_valid': self.verify_integrity()
+            'is_valid': self.verify_integrity(),
+            'is_voting_active': getattr(self, 'is_voting_active', False)
         }
 
 
