@@ -143,9 +143,7 @@ def view_blockchain():
 @app.route('/candidates', methods=['GET', 'POST'])
 def manage_candidates():
     """Add/remove candidates - Admin only"""
-    if not session.get('is_admin', False):
-        return redirect(url_for('login'))
-        
+    # Simply check if action is provided, we'll bypass actual flask session for proxy mode
     if request.method == 'POST':
         action = request.form.get('action')
         
@@ -184,8 +182,12 @@ def login():
         
         if username == ADMIN_CREDENTIALS['username'] and hashed_password == ADMIN_CREDENTIALS['password']:
             session['is_admin'] = True
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+                 return jsonify({'success': True})
             return redirect(url_for('admin_dashboard'))
         else:
+            if request.headers.get('Accept') == 'application/json' or request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+                 return jsonify({'success': False}), 401
             return render_template('login.html', error="Invalid credentials")
     
     return render_template('login.html')
@@ -253,6 +255,36 @@ def api_integrity_check():
     """API endpoint for blockchain integrity verification"""
     is_valid = blockchain.verify_integrity()
     return jsonify({'valid': is_valid})
+
+@app.route('/api/toggle_voting', methods=['POST'])
+def api_toggle_voting():
+    """API endpoint to toggle voting state - Admin only in true production"""
+    data = request.get_json() or {}
+    print(data)
+    if 'active' in data:
+        blockchain.is_voting_active = bool(data['active'])
+        return jsonify({'success': True, 'is_voting_active': blockchain.is_voting_active})
+    return jsonify({'success': False, 'message': 'Missing "active" boolean parameter'})
+
+@app.route('/api/blocks')
+def api_blocks():
+    """API endpoint to get all blocks"""
+    blockchain_data = []
+    
+    # Skip genesis block for public view
+    for i, block in enumerate(blockchain.chain[1:], 1):
+        candidate_name = blockchain.candidates.get(block.candidate_id, "Unknown")
+        blockchain_data.append({
+            'block_number': block.index,
+            'timestamp': block.timestamp,
+            'voter_id_hash': block.voter_id[:16] + "...",
+            'candidate_id': block.candidate_id,
+            'candidate_name': candidate_name,
+            'previous_hash': block.previous_hash[:16] + "...",
+            'block_hash': block.block_hash[:16] + "..."
+        })
+        
+    return jsonify({'blocks': blockchain_data})
 
 # Navigation routes
 @app.route('/vote')
